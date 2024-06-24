@@ -1,4 +1,4 @@
-## 1.1.6 - Unreleased
+## 1.1.6 - 2024-06-24
 
 * fix: Support new lines characters
 
