@@ -100,8 +100,9 @@ class _MyHomePageState extends State<MyHomePage> {
               child: SizedBox(),
             ),
             TextAnimator(
-              'You have pushed the button this many times:',
+              'You have pushed\nthe button\nthis many times:',
               atRestEffect: WidgetRestingEffects.pulse(effectStrength: 0.6),
+              spaceDelay: const Duration(milliseconds: 200),
               style: Theme.of(context).textTheme.bodyMedium,
               incomingEffect: WidgetTransitionEffects.incomingSlideInFromTop(
                   blur: const Offset(0, 20), scale: 2),
@@ -149,13 +150,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 scaleSize: 0.9,
                 yOffset: -5,
                 duration: const Duration(milliseconds: 150),
-                onLongPress: (){
+                onLongPress: () {
                   print('on long press triggered');
                 },
-                onTapDown: (_){
+                onTapDown: (_) {
                   print('on tap down');
                 },
-                onTapUp: (_){
+                onTapUp: (_) {
                   print('on tap up');
                 },
 

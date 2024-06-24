@@ -39,20 +39,21 @@ class TextAnimator extends StatefulWidget {
   final Duration? spaceDelay;
 
   /// Standard constructor for the text animator
-  const TextAnimator(this.text,
-      {Key? key,
-      this.incomingEffect,
-      this.outgoingEffect,
-      this.atRestEffect,
-      this.onIncomingAnimationComplete,
-      this.onOutgoingAnimationComplete,
-      this.maxLines,
-      this.textAlign,
-      this.style,
-      this.initialDelay,
-      this.characterDelay,
-      this.spaceDelay})
-      : super(key: key);
+  const TextAnimator(
+    this.text, {
+    Key? key,
+    this.incomingEffect,
+    this.outgoingEffect,
+    this.atRestEffect,
+    this.onIncomingAnimationComplete,
+    this.onOutgoingAnimationComplete,
+    this.maxLines,
+    this.textAlign,
+    this.style,
+    this.initialDelay,
+    this.characterDelay,
+    this.spaceDelay,
+  }) : super(key: key);
 
   /// [Function] will be called when the last incoming animation character has completed its transition
   final Function(Key?)? onIncomingAnimationComplete;
@@ -90,26 +91,40 @@ class _TextAnimatorState extends State<TextAnimator> {
     ///split the text into words
     _words.clear();
     _incomingDelays.clear();
-    List<String> temp = [];
-    temp = _text.split(' ');
-    for (var element in temp) {
-      _words.add(element = '$element ');
+    final temp = _text.split(' ');
+    var trimLast = false;
+    for (final element in temp) {
+      if (element.contains('\n')) {
+        final parts = element.split('\n');
+        if (parts.length > 1) {
+          for (final p in parts) {
+            _words.add('$p');
+            _words.add('\n');
+          }
+        } else {
+          _words.add('\n');
+        }
+        trimLast = false;
+      } else {
+        _words.add('$element ');
+        trimLast = true;
+      }
     }
-    _words.last = _words.last.trim();
+    if (trimLast) {
+      _words.last = _words.last.trim();
+    }
 
     ///calculate the delays between each incoming character and store
-    Duration delay = const Duration(milliseconds: 0);
+    var delay = const Duration(milliseconds: 0);
     for (int i = 0; i < _words.length; i++) {
       List<Duration> wordDelays = [];
       if (i > 0) {
         delay = delay + (widget.spaceDelay ?? const Duration(milliseconds: 80));
       } else {
-        delay =
-            delay + (widget.initialDelay ?? const Duration(milliseconds: 0));
+        delay = delay + (widget.initialDelay ?? const Duration(milliseconds: 0));
       }
       for (int j = 0; j < (_words[i]).characters.length; j++) {
-        delay =
-            delay + (widget.characterDelay ?? const Duration(milliseconds: 40));
+        delay = delay + (widget.characterDelay ?? const Duration(milliseconds: 40));
         wordDelays.add(delay);
       }
       _incomingDelays.add(wordDelays);
@@ -143,56 +158,85 @@ class _TextAnimatorState extends State<TextAnimator> {
 
     ///Use [RichText] to display each individual characters with delays as specified in the _incomingDelays
     return RichText(
-        key: ValueKey(
-            _text), //needs a key otherwise the old widget will be reused and if the new text is longer than the old text, you get a break in the animation between the two sections
-        softWrap: true,
-        maxLines: widget.maxLines,
-        textAlign: widget.textAlign ?? TextAlign.start,
-        text: TextSpan(
-          style: widget.style,
-          children: [
-            for (int i = 0; i < _words.length; i++)
-              WidgetSpan(
-                  child: Wrap(
-                children: [
-                  for (int j = 0; j < (_words[i]).characters.length; j++)
-                    WidgetAnimator(
-                        incomingEffect: WidgetTransitionEffects.withStyle(
-                          opacity: widget.incomingEffect?.opacity,
-                          scale: widget.incomingEffect?.scale,
-                          offset: widget.incomingEffect?.offset,
-                          rotation: widget.incomingEffect?.rotation,
-                          blur: widget.incomingEffect?.blur,
-                          curve: widget.incomingEffect?.curve,
-                          skew: widget.incomingEffect?.skew,
-                          duration: widget.incomingEffect?.duration,
-                          builder: widget.incomingEffect?.builder,
-                          style: widget.incomingEffect?.style ??
-                              WidgetTransitionEffectStyle.none,
-                          delay: _incomingDelays[i][j],
-                        ),
+      //needs a key otherwise the old widget will be reused and if the new text is longer than the old text, you get a break in the animation between the two sections
+      key: ValueKey(_text),
+      softWrap: true,
+      maxLines: widget.maxLines,
+      textAlign: widget.textAlign ?? TextAlign.start,
+      text: TextSpan(
+        style: widget.style,
+        children: [
+          for (int i = 0; i < _words.length; i++)
+            (_words[i] == '\n')
+                ? TextSpan(text: '\n', style: widget.style, children: [
+                    WidgetSpan(
+                      child: WidgetAnimator(
+                        incomingEffect: _effects(_incomingDelays[i][0]),
                         outgoingEffect: widget.outgoingEffect,
                         atRestEffect: widget.atRestEffect,
-                        onIncomingAnimationComplete: (_isLastCharacter(i, j))
+                        onIncomingAnimationComplete: (_isLastWord(i))
                             ? widget.onIncomingAnimationComplete
                             : null,
-                        onOutgoingAnimationComplete: (_isLastCharacter(i, j))
+                        onOutgoingAnimationComplete: (_isLastWord(i))
                             ? _triggerLastOutgoingAnimation
                             : null,
-                        child: Text(
-                          _words[i].characters.characterAt(j).string,
-                          key: ValueKey('$_text-text$i-$j-$_outgoing'),
-                          style: widget.style,
-                        ))
-                ],
-              )),
-          ],
-        ));
+                        child: SizedBox.shrink(key: ValueKey('$_text-text$i-$_outgoing')),
+                      ),
+                    )
+                  ])
+                : WidgetSpan(
+                    child: Wrap(
+                      children: [
+                        for (int j = 0; j < (_words[i]).characters.length; j++)
+                          WidgetAnimator(
+                            incomingEffect: _effects(_incomingDelays[i][j]),
+                            outgoingEffect: widget.outgoingEffect,
+                            atRestEffect: widget.atRestEffect,
+                            onIncomingAnimationComplete:
+                                (_isLastCharacter(i, j))
+                                    ? widget.onIncomingAnimationComplete
+                                    : null,
+                            onOutgoingAnimationComplete:
+                                (_isLastCharacter(i, j))
+                                    ? _triggerLastOutgoingAnimation
+                                    : null,
+                            child: Text(
+                              _words[i].characters.characterAt(j).string,
+                              key: ValueKey('$_text-text$i-$j-$_outgoing'),
+                              style: widget.style,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+        ],
+      ),
+    );
+  }
+
+  WidgetTransitionEffects _effects(Duration? delay) {
+    return WidgetTransitionEffects.withStyle(
+      opacity: widget.incomingEffect?.opacity,
+      scale: widget.incomingEffect?.scale,
+      offset: widget.incomingEffect?.offset,
+      rotation: widget.incomingEffect?.rotation,
+      blur: widget.incomingEffect?.blur,
+      curve: widget.incomingEffect?.curve,
+      skew: widget.incomingEffect?.skew,
+      duration: widget.incomingEffect?.duration,
+      builder: widget.incomingEffect?.builder,
+      style: widget.incomingEffect?.style ?? WidgetTransitionEffectStyle.none,
+      delay: delay,
+    );
   }
 
   ///we need to know which is the last character animation to trigger on outgoing events to know when to switch over onto the next text
   _isLastCharacter(int i, int j) {
-    return i == _words.length - 1 && j == _words[i].characters.length - 1;
+    return _isLastWord(i) && j == _words[i].characters.length - 1;
+  }
+
+  _isLastWord(int i) {
+    return i == _words.length - 1;
   }
 
   ///when the last animation character triggers, now it's time to replace the text with the new incoming text

@@ -1440,7 +1440,6 @@ class GestureAnimator extends StatefulWidget {
   /// Called when the user taps this widget.
   final VoidCallback? onTap;
 
-
   /// Called when the user long presses on this widget.
   final VoidCallback? onLongPress;
 
@@ -1634,7 +1633,7 @@ class _GestureAnimatorState extends State<GestureAnimator>
         builder: (context, child) {
           return GestureDetector(
             onTapDown: (details) {
-              if (widget.onTapDown!=null){
+              if (widget.onTapDown != null) {
                 widget.onTapDown!(details);
               }
               if (widget.hapticFeedback != null) {
@@ -1643,20 +1642,19 @@ class _GestureAnimatorState extends State<GestureAnimator>
               numberPlayed = 0;
               _animationController.forward();
             },
-            onTapUp: (details){
-              if (widget.onTapUp!=null){
+            onTapUp: (details) {
+              if (widget.onTapUp != null) {
                 widget.onTapUp!(details);
               }
             },
-            onLongPress: (){
-              if (widget.onLongPress!=null){
+            onLongPress: () {
+              if (widget.onLongPress != null) {
                 widget.onLongPress!();
               }
             },
             onTapCancel: () {
               _animationController.reverse();
             },
-
             onTap:
                 widget.triggerOnTapAfterAnimationComplete ? null : widget.onTap,
             child: _OptionalFiltered(
