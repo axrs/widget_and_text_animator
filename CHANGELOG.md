@@ -1,3 +1,7 @@
+## 1.1.6 - Unreleased
+
+* fix: Support new lines characters
+
 ## 1.1.5 - 2023-07-24
  
 * Bug fixes
